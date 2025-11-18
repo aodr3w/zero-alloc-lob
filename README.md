@@ -81,3 +81,26 @@ This library is currently private. It relies on the local llt-rs crate.
 * [ ] Phase 4: Integration
     * Python bindings (via PyO3) for backtesting.
     * Simple TCP/UDP gateway.
+
+
+## PROJECT LAYOUT
+
+```
+zero-alloc-lob/
+├── Cargo.toml
+├── README.md
+├── benches/              # Criterion benchmarks (CRITICAL for this project)
+│   └── latency.rs
+├── src/
+│   ├── lib.rs            # Public API
+│   ├── engine/           # The matching logic
+│   │   ├── mod.rs
+│   │   ├── book.rs       # The Book struct
+│   │   └── matcher.rs    # The execution logic
+│   └── storage/          # The memory layout
+│       ├── mod.rs
+│       └── layout.rs     # Where we use llt-rs arenas
+└── examples/
+    └── simple_match.rs   # A runnable example
+
+```
