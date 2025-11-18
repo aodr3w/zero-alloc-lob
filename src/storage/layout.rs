@@ -99,3 +99,12 @@ impl Order {
         }
     }
 }
+
+/*
+additional engineering commentary
+NonZeroU32 vs usize: I used u32 for the OrderIndex. On a 64-bit machine, a standard pointer (Box<Order>) is 8 bytes. By using an index (u32), we cut the "pointer" size in half.
+This effectively doubles the number of relationships we can store in the CPU cache.
+#[repr(transparent)]: This is a "zero-cost abstraction." It tells the compiler, "Treat Price exactly like a u64 in memory, but don't let me accidentally add a Price to a Quantity in code."
+Intrusive Linked List: Notice next and prev are inside the Order struct. In standard scripting (Python/JS), you might have a List object containing Order objects. In Systems Engineering, the Order knows its place in the list. This removes the need for a separate "List Node" allocation.
+
+*/
