@@ -1,3 +1,4 @@
+use core::fmt;
 use std::ptr::NonNull;
 
 /// Represents a specific side of the Order Book.
@@ -30,6 +31,21 @@ impl Quantity {
     //Helper to substract safely
     pub fn saturating_sub(self, other: Self) -> Self {
         Quantity(self.0.saturating_sub(other.0))
+    }
+}
+
+impl fmt::Display for Quantity {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // For display purposes, assume 3 decimal places (common for volume)
+        // e.g. 100000 -> 100.000
+        let s = format!("{:06}", self.0);
+        let len = s.len();
+
+        if len > 3 {
+            write!(f, "{}.{}", &s[0..len - 3], &s[len - 3..])
+        } else {
+            write!(f, "0.{}", &s)
+        }
     }
 }
 
