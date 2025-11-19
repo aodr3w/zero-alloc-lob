@@ -72,26 +72,6 @@ This library is currently private. It relies on the local llt-rs crate.
 **Recycling**: Canceled orders are pushed to a Vec<OrderPtr> stack, allowing O(1) memory reuse without fragmentation.
 
 
-## 🛠 Roadmap
-
-* [ ] Phase 1: Memory Infrastructure
-
-    * Integration with llt-rs Arena.
-
-    * Definition of OrderNode and OrderBook structs.
-
-* [ ] Phase 2: Matching Logic
-    * FIFO (Price-Time) matching algorithm.
-    * Partial fills and aggressive matching.
-
-* [ ] Phase 3: Order Management
-    * Cancel, Replace/Modify support.
-
-* [ ] Phase 4: Integration
-    * Python bindings (via PyO3) for backtesting.
-    * Simple TCP/UDP gateway.
-
-
 ## PROJECT LAYOUT
 
 ```
