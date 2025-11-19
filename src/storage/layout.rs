@@ -8,6 +8,14 @@ pub enum Side {
     Sell = 1,
 }
 
+impl Side {
+    pub fn opposite(&self) -> Self {
+        match self {
+            Self::Buy => Self::Sell,
+            Self::Sell => Self::Buy,
+        }
+    }
+}
 /// A strongly-typed wrapper around `u64` to represent price.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
