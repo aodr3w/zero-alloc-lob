@@ -2,48 +2,67 @@ use zero_alloc_lob::engine::book::OrderBook;
 use zero_alloc_lob::storage::layout::Side;
 
 fn main() {
-    println!("Initializing Zero-Allocation Order Book...");
-    let mut book = OrderBook::new("BTC-USDT", 100_000);
+    println!("--- Order Book Initialization ---");
+    let initial_capacity = 100_000;
+    let mut book = OrderBook::new("BTC-USDT", initial_capacity);
+    println!("> Arena Capacity: {} bytes", book.capacity_bytes());
 
-    // 1. Place a SELL Order (Maker)
-    // Sell 1.0 BTC @ 50,000
-    println!("\n> [1] Placing SELL: 1.0 @ 50,000");
-    let (ptr1, trades1) = book.place_limit_order(1, Side::Sell, 50_000, 100).unwrap();
-    println!("    Status: Rested (Addr: {:p})", ptr1.unwrap().as_ptr());
-    println!("    Trades: {}", trades1.len());
+    // --- 1. FIRST ORDER: Allocate New Memory ---
+    let order_id_1 = 101;
+    let price_1 = 50_000;
+    let quantity = 100;
 
-    // 2. Place a SELL Order (Maker)
-    // Sell 0.5 BTC @ 51,000
-    println!("\n> [2] Placing SELL: 0.5 @ 51,000");
-    let (ptr2, _) = book.place_limit_order(2, Side::Sell, 51_000, 50).unwrap();
-    println!("    Status: Rested (Addr: {:p})", ptr2.unwrap().as_ptr());
+    println!("\n--- 1. Placing Order 101 (Initial Allocation) ---");
+    book.place_limit_order(order_id_1, Side::Sell, price_1, quantity)
+        .unwrap();
 
-    // 3. Place a BUY Order (Taker)
-    // Buy 1.2 BTC @ 52,000
-    // This should eat the entire 1.0 @ 50,000 and part of the 0.5 @ 51,000?
-    // WAIT: Our current implementation is "Stack" (LIFO) insert for simplicity.
-    // So it will match the 51,000 order FIRST (because it was inserted last and is at the head).
-    // This highlights why we need Sorted Insert in Phase 2!
-
-    println!("\n> [3] Placing BUY: 1.2 @ 52,000 (Crosses Spread)");
-    let (ptr3, trades3) = book.place_limit_order(3, Side::Buy, 52_000, 120).unwrap();
+    let used_after_1 = book.used_bytes();
+    let slot_size = used_after_1;
 
     println!(
-        "    Status: {:?}",
-        if ptr3.is_some() { "Rested" } else { "Filled" }
+        "    Used Bytes: {} ({} bytes/slot)",
+        used_after_1, slot_size
     );
-    println!("    Trades Generated: {}", trades3.len());
+    println!("    Active Orders: {}", book.active_orders());
 
-    for (i, trade) in trades3.iter().enumerate() {
-        println!(
-            "    Trade #{}: Maker={} Taker={} Price={} Qty={}",
-            i + 1,
-            trade.maker_id.0,
-            trade.taker_id.0,
-            trade.price.0,
-            trade.quantity.0
-        );
-    }
+    // --- 2. CANCEL ORDER 1: Creates a Memory Hole (Recyclable Slot) ---
+    println!("\n--- 2. Cancelling Order 101 (Creates Free Slot) ---");
+    book.cancel_order(order_id_1).unwrap();
 
-    println!("\n> Final Memory Usage: {} bytes", book.used_bytes());
+    let used_after_cancel = book.used_bytes();
+    let free_slots = book.free_slots();
+
+    println!("    Used Bytes (Unchanged): {}", used_after_cancel); // Should be the same
+    println!("    Active Orders: {}", book.active_orders());
+    println!("    Free Slots Available: {}", free_slots);
+
+    assert_eq!(used_after_1, used_after_cancel);
+    assert_eq!(free_slots, 1);
+
+    // --- 3. SECOND ORDER: Recycle Canceled Memory Slot ---
+    let order_id_2 = 102;
+    let price_2 = 50_001;
+
+    println!("\n--- 3. Placing Order 102 (Recycling Slot) ---");
+    book.place_limit_order(order_id_2, Side::Sell, price_2, quantity)
+        .unwrap();
+
+    let used_after_2 = book.used_bytes();
+    let free_slots_after_reuse = book.free_slots();
+
+    println!("    Used Bytes: {}", used_after_2);
+    println!("    Active Orders: {}", book.active_orders());
+    println!("    Free Slots Available: {}", free_slots_after_reuse);
+
+    // THE CRITICAL TEST: Used bytes must NOT increase!
+    assert_eq!(
+        used_after_1, used_after_2,
+        "Memory leak detected! Used bytes should not increase after recycling."
+    );
+    assert_eq!(free_slots_after_reuse, 0, "Free list was not drained.");
+
+    println!("\n✅ SUCCESS: Memory slot was recycled. Zero dynamic allocation maintained.");
+
+    // Final state cleanup
+    book.cancel_order(order_id_2).unwrap();
 }
