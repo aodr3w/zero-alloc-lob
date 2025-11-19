@@ -9,7 +9,6 @@ pub struct OrderBook {
     symbol: &'static str,
     order_arena: Arena,
 
-    // Exposed to crate for matcher.rs
     pub(crate) best_bid: Option<OrderPtr>,
     pub(crate) best_ask: Option<OrderPtr>,
 
@@ -20,8 +19,7 @@ pub struct OrderBook {
 impl OrderBook {
     pub fn new(symbol: &'static str, capacity: usize) -> Self {
         let order_size = mem::size_of::<Order>();
-        // Capacity bytes + padding buffer
-        let total_bytes = capacity * order_size + (capacity * 64);
+        let total_bytes = capacity * order_size;
 
         Self {
             symbol,
