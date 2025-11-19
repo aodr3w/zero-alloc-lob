@@ -19,6 +19,7 @@ pub struct OrderBook {
 impl OrderBook {
     pub fn new(symbol: &'static str, capacity: usize) -> Self {
         let order_size = mem::size_of::<Order>();
+        // Memory-perfect allocation: capacity * size
         let total_bytes = capacity * order_size;
 
         Self {
@@ -59,34 +60,15 @@ impl OrderBook {
         }
 
         // --- STEP 2: PLACEMENT (MAKER) ---
-        // If we are here, it means the order is now a "Resting Order".
-        // We allocate it in the Arena and link it into the list.
-
+        // If we are here, the order is now a "Resting Order".
         let new_order_data = Order::new(order_id, side, price, remaining_qty);
 
-        // ALLOCATION (Hot Path)
+        // ALLOCATION (Hot Path - Unsafe due to arena interaction)
         let order_ref = self.order_arena.alloc(new_order_data);
-        let mut order_ptr = unsafe { NonNull::new_unchecked(order_ref as *mut Order) };
+        let order_ptr = unsafe { NonNull::new_unchecked(order_ref as *mut Order) };
 
-        // INSERTION
-        // Note: A real LOB requires Sorted Insert (O(N) or O(log N)).
-        // For this Phase 1 prototype, we are doing Head Insert (Stack Behavior).
-        // This is incorrect for price-time priority but validates the memory model.
-        match side {
-            Side::Buy => unsafe {
-                order_ptr.as_mut().next = self.best_bid;
-                if let Some(mut head) = self.best_bid {
-                    head.as_mut().prev = Some(order_ptr);
-                }
-                self.best_bid = Some(order_ptr);
-            },
-            Side::Sell => unsafe {
-                order_ptr.as_mut().next = self.best_ask;
-                if let Some(mut head) = self.best_ask {
-                    head.as_mut().prev = Some(order_ptr);
-                }
-                self.best_ask = Some(order_ptr);
-            },
+        unsafe {
+            self.insert_sorted(order_ptr, side, price);
         }
 
         Ok((Some(order_ptr), trades))
@@ -96,6 +78,7 @@ impl OrderBook {
     /// Crucial for when an order is fully filled during matching.
     pub(crate) fn remove_order(&mut self, mut ptr: OrderPtr) {
         unsafe {
+            // Safety: We assume ptr is valid and points to memory owned by the arena.
             let order = ptr.as_mut();
             let next_ptr = order.next;
             let prev_ptr = order.prev;
@@ -118,14 +101,74 @@ impl OrderBook {
                 self.best_ask = next_ptr;
             }
 
-            // Clear pointers on the removed order to be safe
+            // Clear pointers on the removed order
             order.next = None;
             order.prev = None;
+        }
+    }
 
-            // Note: We do NOT free the memory in the Arena.
-            // In a bump allocator, memory is only reclaimed on `reset()`.
-            // This creates "holes" (fragmentation), which is why we need
-            // the Object Pool (Phase 3) to recycle these slots later.
+    /// Inserts a new order into the linked list maintaining Price-Time priority.
+    /// O(N) operation in this implementation (Linear Scan)
+    unsafe fn insert_sorted(&mut self, mut new_ptr: OrderPtr, side: Side, price: Price) {
+        let mut current_ptr = match side {
+            Side::Buy => self.best_bid,
+            Side::Sell => self.best_ask,
+        };
+
+        let mut prev_ptr: Option<OrderPtr> = None;
+
+        // TRAVERSAL: Find the insertion point
+        while let Some(curr) = current_ptr {
+            // Safety: Accessing Order data through pointer, must be wrapped.
+            let curr_order = unsafe { curr.as_ref() };
+
+            // Stop if we find a spot where the new order belongs BEFORE the current one.
+            let should_insert_before = match side {
+                // Buy Side (Descending): Insert if New Price > Current Price.
+                Side::Buy => price > curr_order.price,
+                // Sell Side (Ascending): Insert if New Price < Current Price.
+                Side::Sell => price < curr_order.price,
+            };
+
+            if should_insert_before {
+                break;
+            }
+
+            // Advance the pointers
+            prev_ptr = Some(curr);
+            current_ptr = curr_order.next;
+        }
+
+        // INSERTION: We are inserting `new_ptr` between `prev_ptr` and `current_ptr`.
+
+        // 1. Link New -> Next (Current)
+        unsafe {
+            new_ptr.as_mut().next = current_ptr;
+        }
+
+        // 2. Link New -> Prev (Prev)
+        unsafe {
+            new_ptr.as_mut().prev = prev_ptr;
+        }
+
+        // 3. Link Next -> New
+        if let Some(mut curr) = current_ptr {
+            unsafe {
+                curr.as_mut().prev = Some(new_ptr);
+            }
+        }
+
+        // 4. Link Prev -> New OR Update Head
+        if let Some(mut prev) = prev_ptr {
+            unsafe {
+                prev.as_mut().next = Some(new_ptr);
+            }
+        } else {
+            // If no prev, we are the new Head
+            match side {
+                Side::Buy => self.best_bid = Some(new_ptr),
+                Side::Sell => self.best_ask = Some(new_ptr),
+            }
         }
     }
 
