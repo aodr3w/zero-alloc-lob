@@ -26,6 +26,13 @@ pub struct Price(pub u64);
 #[repr(transparent)]
 pub struct Quantity(pub u64);
 
+impl Quantity {
+    //Helper to substract safely
+    pub fn saturating_sub(self, other: Self) -> Self {
+        Quantity(self.0.saturating_sub(other.0))
+    }
+}
+
 /// A unique identifier for an Order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(transparent)]
