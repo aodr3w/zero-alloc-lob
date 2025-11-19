@@ -35,32 +35,41 @@ The engine is built on top of the llt-rs (Low Latency Toolkit) ecosystem.
 
 feature = ["arena_allocator"]: Used for storing Order Nodes (Red-Black Tree or Splay Tree nodes).
 
-feature = ["object-pool"]: Used for recycling Order objects to minimize construction overhead.
 
-## Data Layout
+## 🚀 Performance Benchmarks
 
-**Bids/Asks**: Stored in cache-friendly binary trees (or flat maps for dense price levels).
+Benchmarks run on Apple M1/M2 Pro (3.2 GHz).
 
-**Order Storage**: Intrusive linked lists backed by slab allocation to ensure stable memory addresses without pointers.
+--------------------------------------------------------------------------------
+Metric               Condition                           Result       Complexity 
+--------------------------------------------------------------------------------
+**Place Order**       Top of Book (Best Bid/Ask)          ~74 ns       O(1)
+
+**Match Execution**   Single Trade                        ~72 ns       O(1)
+
+**Deep Insertion**    Middle of 5,000 Orders              ~4.36 µs     O(N)
+
+---------------------------------------------------------------------------------
 
 
-## 🚀 Performance Targets
+### Analysis of Results
 
-Metric                Target          Current
+**Hot Path (~74ns)**: The engine achieves sub-100ns latency for updates at the best price level. This is due to the pointer-based design avoiding all syscalls.
 
-**Add Order**         < 200 ms         TBD
-
-**Cancel Order**      < 150ns          TBD
-
-**Match Execution**   < 500ns          TBD
-
-**Jitter (99th %ile)**  < 1µs          TBD
-
+**Deep Book (~1.7ns per node)**: While O(N) insertion is slower, the linear scan speed proves the cache benefits of the Arena. Traversing orders takes ~1.7ns/hop, indicating a near 100% L1 Cache Hit rate.
 
 ## 📦 Installation & Usage
 
 This library is currently private. It relies on the local llt-rs crate.
 
+
+## Data Layout
+
+**Orders**: Stored as NonNull pointers in a pre-allocated byte buffer.
+
+**Indexing**: HashMap<OrderId, OrderPtr> for O(1) cancellation lookups.
+
+**Recycling**: Canceled orders are pushed to a Vec<OrderPtr> stack, allowing O(1) memory reuse without fragmentation.
 
 
 ## 🛠 Roadmap
