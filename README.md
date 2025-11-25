@@ -125,12 +125,12 @@ zero-alloc-lob/
 │   ├── lib.rs            # Public API
 │   ├── engine/           # The matching logic
 │   │   ├── mod.rs
-│   │   ├── book.rs       # The Book struct
+│   │   ├── book.rs       # The Book struct (Arena Owner)
 │   │   └── matcher.rs    # The execution logic
 │   └── storage/          # The memory layout
 │       ├── mod.rs
-│       └── layout.rs     # Where we use llt-rs arenas
+│       └── layout.rs     # Arena-compatible structs
 └── examples/
-    └── simple_match.rs   # A runnable example
+    └── simple_match.rs  # Runnable example
 
 ```
