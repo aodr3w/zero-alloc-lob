@@ -65,24 +65,10 @@ This library is currently private. It relies on the local llt-rs crate.
 
 ## 📦 Installation & Usage
 
-You can use zero-alloc-lob as a dependency in your project or run it locally for development.
-
-
-### Option 1: Cargo Dependency (Recommended)
-
-Add this to your Cargo.toml to use the engine in your own application:
+### git clone (ssh)
 
 ```
-[dependencies]
-# Use the git dependency for the latest version
-zero-alloc-lob = { git = "[https://github.com/aodr3w/zero-alloc-lob.git](https://github.com/aodr3w/zero-alloc-lob.git)" }
-llt-rs = "0.6.0"
-
-```
-### Option 2: Local Development (Git Clone)
-
-```
-git clone [https://github.com/aodr3w/zero-alloc-lob.git](https://github.com/aodr3w/zero-alloc-lob.git)
+git clone git@github.com:aodr3w/zero-alloc-lob.git
 cd zero-alloc-lob
 
 # Run the example
