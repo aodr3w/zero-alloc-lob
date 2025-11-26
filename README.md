@@ -94,41 +94,6 @@ cargo bench
 **Recycling**: Canceled orders are pushed to a `Vec<OrderPtr>` stack (acting as a Free List), allowing O(1) memory reuse without fragmentation or allocation.
 
 
-## 📦 Installation & Usage
-
-### git clone (ssh)
-
-```
-git clone git@github.com:aodr3w/zero-alloc-lob.git
-cd zero-alloc-lob
-
-# Run the example
-cargo run --example simple_match
-
-# Run benchmarks
-cargo bench
-
-```
-### Example
-
-```
-use zero_alloc_lob::engine::book::OrderBook;
-use zero_alloc_lob::storage::layout::Side;
-
-fn main() {
-    // 1. Warm Up: Pre-allocate memory for 1 million orders
-    let mut book = OrderBook::new("BTC-USDT", 1_000_000);
-
-    // 2. The Hot Path (Zero Allocation)
-    // Maker: Places a passive order
-    book.place_limit_order(101, Side::Buy, 50_000, 100).unwrap(); 
-    
-    // Taker: Matches against the resting order
-    book.place_limit_order(102, Side::Sell, 50_000, 50).unwrap(); 
-}
-
-```
-
 
 ## PROJECT LAYOUT
 
