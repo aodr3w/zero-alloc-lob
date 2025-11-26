@@ -1,6 +1,8 @@
 use crate::engine::book::OrderBook;
 use crate::storage::layout::{OrderId, Price, Quantity, Side};
 
+const AVG_SWEEP_SIZE: usize = 16;
+
 #[derive(Debug, Clone)]
 pub struct Trade {
     pub maker_id: OrderId,
@@ -23,7 +25,7 @@ pub fn execute_match(
     taker_price: Price,
     mut taker_qty: Quantity,
 ) -> (Quantity, Vec<Trade>) {
-    let mut trades = Vec::with_capacity(16); //Pre-allocate for common case
+    let mut trades = Vec::with_capacity(AVG_SWEEP_SIZE); //Pre-allocate for common case
 
     loop {
         //1 if incoming is filled, stop.
