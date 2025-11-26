@@ -49,9 +49,40 @@ Metric               Condition                           Result       Complexity
 The engine is built on top of the llt-rs (Low Latency Toolkit) ecosystem.
 
 
+
 ## 📦 Installation & Usage
 
-This library is currently private. It relies on the local llt-rs crate.
+This is an exhibition project demonstrating low-latency systems programming techniques.
+
+### 1. Setup
+
+Clone the repository and enter the directory:
+
+```
+
+git clone git@github.com:aodr3w/zero-alloc-lob.git
+cd zero-alloc-lob
+
+```
+
+### 2. Run Example
+
+See the engine in action with the provided example scenario:
+
+```
+cargo run --example simple_match
+
+```
+
+
+### 3. Run Latency Benchmarks
+
+Reproduce the performance metrics using Criterion:
+
+```
+cargo bench
+
+```
 
 
 ## Memory Layout
