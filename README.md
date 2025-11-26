@@ -20,20 +20,15 @@ Unlike standard matching engines that rely on dynamic memory allocation (causing
 **Price-Time Priority**: Implements standard matching logic using intrusive linked lists.
 
 
-## 🚀 Performance Benchmarks
+### 🚀 Performance Benchmarks
 
 Benchmarks run on Apple M1/M2 Pro (3.2 GHz).
 
---------------------------------------------------------------------------------
-Metric               Condition                           Result       Complexity 
---------------------------------------------------------------------------------
-**Place Order**       Top of Book (Best Bid/Ask)          ~74 ns       O(1)
-
-**Match Execution**   Single Trade                        ~72 ns       O(1)
-
-**Deep Insertion**    Middle of 5,000 Orders              ~4.36 µs     O(N)
-
----------------------------------------------------------------------------------
+| Metric | Condition | Result (Mean) | Complexity |
+| :--- | :--- | :--- | :--- |
+| **Place Order** | Top of Book (Best Bid/Ask) | **~74 ns** | **O(1)** |
+| **Match Execution** | Single Trade | **~72 ns** | **O(1)** |
+| **Deep Insertion** | Middle of 5,000 Orders | **~4.36 μs** | **O(N)** |
 
 
 ### Analysis
