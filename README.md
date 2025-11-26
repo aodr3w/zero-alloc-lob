@@ -48,6 +48,13 @@ Metric               Condition                           Result       Complexity
 
 The engine is built on top of the llt-rs (Low Latency Toolkit) ecosystem.
 
+```
+crate: https://crates.io/crates/llt-rs
+
+github: https://github.com/aodr3w/llt-rs
+
+```
+
 
 
 ## 📦 Installation & Usage
@@ -74,7 +81,6 @@ cargo run --example simple_match
 
 ```
 
-
 ### 3. Run Latency Benchmarks
 
 Reproduce the performance metrics using Criterion:
@@ -83,7 +89,6 @@ Reproduce the performance metrics using Criterion:
 cargo bench
 
 ```
-
 
 ## Memory Layout
 
