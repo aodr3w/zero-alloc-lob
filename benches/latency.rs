@@ -14,7 +14,7 @@ fn benchmark_place_order(c: &mut Criterion) {
             .unwrap();
     }
 
-    let next_id = 1000; // Removed mut (not needed as it's copied)
+    let next_id = 1000;
 
     c.bench_function("place_limit_order_no_match", |b| {
         b.iter(|| {
@@ -45,7 +45,7 @@ fn benchmark_match_order(c: &mut Criterion) {
             .unwrap();
     }
 
-    let taker_id = 20_000; // Removed mut
+    let taker_id = 20_000;
 
     c.bench_function("execute_match_single", |b| {
         b.iter(|| {
